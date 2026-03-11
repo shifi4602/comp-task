@@ -44,7 +44,7 @@ def api_find_slots():
 
     duration = timedelta(hours=hours, minutes=minutes)
     slots = find_available_slots(person_list, duration, _calendar)
-    return jsonify({"slots": [s.strftime("%H:%M") for s in slots]})
+    return jsonify({"slots": [{"start": s.strftime("%H:%M"), "end": e.strftime("%H:%M")} for s, e in slots]})
 
 
 @app.route("/person-events")

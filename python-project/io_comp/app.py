@@ -140,16 +140,12 @@ def find_available_slots(
     if cursor < _DAY_END:
         free_gaps.append((cursor, _DAY_END))
 
-    slots: List[time] = []
+    slots: List[tuple] = []
     for gap_start, gap_end in free_gaps:
-        # Skip gaps that are only walking/transition time between tasks
-        if gap_end - gap_start <= TRANSITION_BUFFER_MINUTES:
+        # Skip gaps that are too short for the requested meeting
+        if gap_end - gap_start < duration_min:
             continue
-        latest_start = gap_end - duration_min
-        t = gap_start
-        while t <= latest_start:
-            slots.append(_to_time(t))
-            t += _SLOT_STEP
+        slots.append((_to_time(gap_start), _to_time(gap_end)))
 
     return slots
 
@@ -162,8 +158,8 @@ def main():
     slots = find_available_slots(people, duration, calendar)
     print(f"Available 60-minute slots for {', '.join(people)}:")
     if slots:
-        for s in slots:
-            print(f"  {s.strftime('%H:%M')}")
+        for s, e in slots:
+            print(f"  {s.strftime('%H:%M')} - {e.strftime('%H:%M')}")
     else:
         print("  No available slots found.")
     sys.exit(0)
