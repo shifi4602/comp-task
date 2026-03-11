@@ -7,7 +7,9 @@ import pytest
 
 from io_comp.app import Calendar, Event, find_available_slots
 
-
+# helper function to create a Calendar instance from a list of event tuples (person, subject, start_str, end_str). This is used in the tests to set up specific calendar scenarios without needing to read from a CSV file.
+# it a unit test so it not reading from the csv file and using fake data to test the function.
+# this function help to put the data in the calendar and then test the function will use it like in the real function it test.
 def _make_calendar(rows):
     """Build a Calendar from (person, subject, 'HH:MM', 'HH:MM') tuples."""
     cal = Calendar()
@@ -101,3 +103,54 @@ def test_duration_too_long_returns_empty():
     # Longest free gap is 09:30-13:00 = 210 min; 4 h = 240 min won't fit anywhere
     slots = find_available_slots(["Alice"], timedelta(hours=4), cal)
     assert slots == []
+
+
+def test_fully_booked_no_slots():
+    """
+    Carol's schedule covers the entire workday 07:00-19:00 with no gaps at all.
+    No slot of any size should be returned.
+    """
+    cal = _make_calendar([
+        ("Carol", "Early meeting",   "07:00", "09:00"),
+        ("Carol", "Project sync",    "09:00", "12:00"),
+        ("Carol", "Lunch meeting",   "12:00", "14:00"),
+        ("Carol", "Afternoon block", "14:00", "17:00"),
+        ("Carol", "Late call",       "17:00", "19:00"),
+    ])
+    slots = find_available_slots(["Carol"], timedelta(minutes=30), cal)
+    assert slots == []
+
+
+def test_two_people_combined_fully_booked_no_slots():
+    """
+    Dave is busy 07:00-13:00 and Eve is busy 13:00-19:00.
+    Their combined busy time covers the entire day, leaving no free slot for both.
+    """
+    cal = _make_calendar([
+        ("Dave", "Morning block", "07:00", "13:00"),
+        ("Eve",  "Afternoon",     "13:00", "19:00"),
+    ])
+    slots = find_available_slots(["Dave", "Eve"], timedelta(minutes=15), cal)
+    assert slots == []
+
+
+def test_event_start_not_before_end_raises():
+    """
+    An Event whose start time is equal to or later than its end time is invalid.
+    Creating such an Event should raise a ValueError.
+
+    Valid event:   start=09:00, end=10:00  (start < end) — OK
+    Invalid event: start=10:00, end=09:00  (start > end) — should raise
+    Invalid event: start=09:00, end=09:00  (start == end) — should raise
+    """
+    # A valid event should not raise
+    valid_event = Event(person="Frank", subject="Valid", start=time(9, 0), end=time(10, 0))
+    assert valid_event.start < valid_event.end
+
+    # start is after end — must raise ValueError
+    with pytest.raises(ValueError):
+        Event(person="Frank", subject="Reversed", start=time(10, 0), end=time(9, 0))
+
+    # start equals end (zero-duration) — must raise ValueError
+    with pytest.raises(ValueError):
+        Event(person="Frank", subject="Zero duration", start=time(9, 0), end=time(9, 0))

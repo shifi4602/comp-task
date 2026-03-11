@@ -48,6 +48,13 @@ class Event:
     start: time
     end: time
 
+    def __post_init__(self):
+        if self.start >= self.end:
+            raise ValueError(
+                f"Event '{self.subject}' for {self.person}: "
+                f"start ({self.start}) must be before end ({self.end})"
+            )
+
 # class definition for Calendar. it has a method to load events from a csv file, and a method to get events for a specific person.
 class Calendar:
 
@@ -149,14 +156,17 @@ def find_available_slots(
 
     return slots
 
-
+# the main function that run in the terminal and print the available slots. it uses the find_available_slots function to find the slots between the people and print them in the terminal. it also handles the case when there are no available slots found.
 def main():
-    """Demo: print available 60-minute slots for Alice and Jack."""
     calendar = Calendar.load_from_csv()
-    people = ["Alice", "Jack"]
+    #people = ["Alice", "Jack", "Bob"]
+    people = sorted(calendar._events.keys)
+    # the default time for slot is one hour. the user can change it.
     duration = timedelta(hours=1)
+    # find the slots for the people and the duration using the find_available_slots function. it returns a list of tuples with the start and end time of the slots.
     slots = find_available_slots(people, duration, calendar)
     print(f"Available 60-minute slots for {', '.join(people)}:")
+    # if there is any slot found, it prints the start and end time of the slots in the terminal. if there is no slot found, it prints a message saying that no available slots found.
     if slots:
         for s, e in slots:
             print(f"  {s.strftime('%H:%M')} - {e.strftime('%H:%M')}")
@@ -164,6 +174,6 @@ def main():
         print("  No available slots found.")
     sys.exit(0)
 
-
+# the main function is called when the script is run directly. it runs the main function and exits with code 0.
 if __name__ == "__main__":
     main()
