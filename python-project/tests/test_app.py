@@ -5,7 +5,9 @@ from datetime import time, timedelta
 
 import pytest
 
-from io_comp.app import Calendar, Event, find_available_slots
+from io_comp.event import Event
+from io_comp.calendar import Calendar
+from io_comp.app import find_available_slots
 
 # helper function to create a Calendar instance from a list of event tuples (person, subject, start_str, end_str). This is used in the tests to set up specific calendar scenarios without needing to read from a CSV file.
 # it a unit test so it not reading from the csv file and using fake data to test the function.

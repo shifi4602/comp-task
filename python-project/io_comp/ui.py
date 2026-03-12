@@ -7,7 +7,8 @@ from datetime import timedelta
 
 from flask import Flask, render_template, request, jsonify
 
-from .app import Calendar, find_available_slots
+from .calendar import Calendar
+from .app import find_available_slots
 
 _TEMPLATES = Path(__file__).parent / "templates"
 
